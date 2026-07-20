@@ -1,0 +1,570 @@
+/* Markdown 预览样式 */
+/* 浅色和深色主题支持 */
+
+/* ============ 基础容器样式 ============ */
+
+.markdown-preview {
+  padding: 20px;
+  line-height: 1.6;
+  font-size: 14px;
+  overflow-y: auto;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  color: #24292f;
+  background-color: #ffffff;
+}
+
+/* ============ 标题样式 ============ */
+
+.markdown-preview h1,
+.markdown-preview h2,
+.markdown-preview h3,
+.markdown-preview h4,
+.markdown-preview h5,
+.markdown-preview h6 {
+  margin-top: 24px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.markdown-preview h1 {
+  font-size: 2em;
+  border-bottom: 1px solid #d0d7de;
+  padding-bottom: 0.3em;
+}
+
+.markdown-preview h2 {
+  font-size: 1.5em;
+  border-bottom: 1px solid #d0d7de;
+  padding-bottom: 0.3em;
+}
+
+.markdown-preview h3 {
+  font-size: 1.25em;
+}
+
+.markdown-preview h4 {
+  font-size: 1em;
+}
+
+.markdown-preview h5 {
+  font-size: 0.875em;
+}
+
+.markdown-preview h6 {
+  font-size: 0.85em;
+  color: #57606a;
+}
+
+/* ============ 段落样式 ============ */
+
+.markdown-preview p {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+/* ============ 列表样式 ============ */
+
+.markdown-preview ul,
+.markdown-preview ol {
+  margin-top: 0;
+  margin-bottom: 16px;
+  padding-left: 2em;
+}
+
+.markdown-preview li {
+  margin-top: 0.25em;
+}
+
+.markdown-preview li + li {
+  margin-top: 0.25em;
+}
+
+.markdown-preview ul ul,
+.markdown-preview ul ol,
+.markdown-preview ol ol,
+.markdown-preview ol ul {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+/* ============ 代码样式 ============ */
+
+.markdown-preview code {
+  padding: 0.2em 0.4em;
+  margin: 0;
+  font-size: 85%;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  background-color: rgba(175, 184, 193, 0.2);
+  border-radius: 6px;
+}
+
+.markdown-preview pre {
+  padding: 16px;
+  overflow: auto;
+  line-height: 1.45;
+  font-size: 85%;
+  background-color: #f6f8fa;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+.markdown-preview pre code {
+  background: transparent;
+  padding: 0;
+  font-size: 100%;
+}
+
+/* 代码高亮 - highlight.js 样式 */
+.markdown-preview .hljs {
+  background: #f6f8fa;
+}
+
+.markdown-preview .hljs-keyword,
+.markdown-preview .hljs-selector-tag,
+.markdown-preview .hljs-title,
+.markdown-preview .hljs-section,
+.markdown-preview .hljs-doctag,
+.markdown-preview .hljs-name,
+.markdown-preview .hljs-strong {
+  font-weight: bold;
+}
+
+.markdown-preview .hljs-string,
+.markdown-preview .hljs-attr {
+  color: #032f62;
+}
+
+.markdown-preview .hljs-comment,
+.markdown-preview .hljs-quote {
+  color: #6e7781;
+  font-style: italic;
+}
+
+.markdown-preview .hljs-keyword {
+  color: #cf222e;
+}
+
+.markdown-preview .hljs-function {
+  color: #8250df;
+}
+
+.markdown-preview .hljs-number {
+  color: #0550ae;
+}
+
+.markdown-preview .hljs-variable,
+.markdown-preview .hljs-template-variable {
+  color: #953800;
+}
+
+/* ============ 引用样式 ============ */
+
+.markdown-preview blockquote {
+  padding: 0 1em;
+  color: #57606a;
+  border-left: 0.25em solid #d0d7de;
+  margin: 0 0 16px 0;
+}
+
+.markdown-preview blockquote p {
+  color: inherit;
+}
+
+/* ============ 表格样式 ============ */
+
+.markdown-preview table {
+  border-spacing: 0;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+}
+
+.markdown-preview table th,
+.markdown-preview table td {
+  padding: 6px 13px;
+  border: 1px solid #d0d7de;
+}
+
+.markdown-preview table th {
+  font-weight: 600;
+  background-color: #f6f8fa;
+}
+
+.markdown-preview table tr {
+  background-color: #ffffff;
+  border-top: 1px solid #d8dee4;
+}
+
+.markdown-preview table tr:nth-child(2n) {
+  background-color: #f6f8fa;
+}
+
+/* ============ 链接样式 ============ */
+
+.markdown-preview a {
+  color: #0969da;
+  text-decoration: none;
+}
+
+.markdown-preview a:hover {
+  text-decoration: underline;
+}
+
+/* ============ 图片样式 ============ */
+
+.markdown-preview img {
+  max-width: 100%;
+  box-sizing: content-box;
+  background-color: #ffffff;
+  border-radius: 6px;
+}
+
+/* ============ 分割线样式 ============ */
+
+.markdown-preview hr {
+  height: 0.25em;
+  padding: 0;
+  margin: 24px 0;
+  background-color: #d0d7de;
+  border: 0;
+}
+
+/* ============ 任务列表样式 ============ */
+
+.markdown-preview ul.contains-task-list {
+  list-style: none;
+  padding-left: 1.5em;
+}
+
+.markdown-preview .task-list-item {
+  margin-left: -1.5em;
+  list-style-type: none;
+}
+
+.markdown-preview .task-list-item input[type="checkbox"] {
+  margin: 0 0.5em 0.25em -1.6em;
+  vertical-align: middle;
+}
+
+/* ============ 脚注样式 ============ */
+
+.markdown-preview .footnotes {
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid #d0d7de;
+  font-size: 0.9em;
+}
+
+.markdown-preview .footnote-ref {
+  font-size: 0.75em;
+  vertical-align: super;
+}
+
+.markdown-preview .footnote-backref {
+  font-size: 0.75em;
+  margin-left: 4px;
+}
+
+/* ============ 自定义容器样式 ============ */
+
+.markdown-preview .custom-container {
+  padding: 16px;
+  margin-bottom: 16px;
+  border-radius: 6px;
+}
+
+.markdown-preview .custom-container-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+/* 提示容器 */
+.markdown-preview .custom-container-tip {
+  background-color: #ddf4ff;
+  border-left: 4px solid #0969da;
+}
+
+.markdown-preview .custom-container-tip .custom-container-title {
+  color: #0969da;
+}
+
+/* 警告容器 */
+.markdown-preview .custom-container-warning {
+  background-color: #fff8c5;
+  border-left: 4px solid #9a6700;
+}
+
+.markdown-preview .custom-container-warning .custom-container-title {
+  color: #9a6700;
+}
+
+/* 危险容器 */
+.markdown-preview .custom-container-danger {
+  background-color: #ffebe9;
+  border-left: 4px solid #cf222e;
+}
+
+.markdown-preview .custom-container-danger .custom-container-title {
+  color: #cf222e;
+}
+
+/* 信息容器 */
+.markdown-preview .custom-container-info {
+  background-color: #ddf4ff;
+  border-left: 4px solid #0969da;
+}
+
+.markdown-preview .custom-container-info .custom-container-title {
+  color: #0969da;
+}
+
+/* 备注容器 */
+.markdown-preview .custom-container-note {
+  background-color: #f6f8fa;
+  border-left: 4px solid #57606a;
+}
+
+.markdown-preview .custom-container-note .custom-container-title {
+  color: #57606a;
+}
+
+/* ============ 删除线样式 ============ */
+
+.markdown-preview del {
+  text-decoration: line-through;
+  color: #57606a;
+}
+
+/* ============ 标记/高亮样式 ============ */
+
+.markdown-preview mark {
+  background-color: #fcf3a2;
+  padding: 0.1em 0.2em;
+  border-radius: 3px;
+}
+
+/* ============ 键盘按键样式 ============ */
+
+.markdown-preview kbd {
+  display: inline-block;
+  padding: 0.2em 0.4em;
+  font-size: 85%;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  line-height: 1;
+  background-color: #f6f8fa;
+  border: 1px solid rgba(175, 184, 193, 0.4);
+  border-radius: 6px;
+  box-shadow: inset 0 -1px 0 rgba(175, 184, 193, 0.4);
+}
+
+/* ============ 深色主题样式 ============ */
+
+.markdown-preview.dark {
+  color: #c9d1d9;
+  background-color: #0d1117;
+}
+
+/* 深色标题 */
+.markdown-preview.dark h1,
+.markdown-preview.dark h2 {
+  border-bottom-color: #30363d;
+}
+
+.markdown-preview.dark h6 {
+  color: #8b949e;
+}
+
+/* 深色代码 */
+.markdown-preview.dark code {
+  background-color: rgba(110, 118, 129, 0.4);
+}
+
+.markdown-preview.dark pre {
+  background-color: #161b22;
+}
+
+.markdown-preview.dark .hljs {
+  background: #161b22;
+}
+
+.markdown-preview.dark .hljs-string,
+.markdown-preview.dark .hljs-attr {
+  color: #a5d6ff;
+}
+
+.markdown-preview.dark .hljs-comment,
+.markdown-preview.dark .hljs-quote {
+  color: #8b949e;
+}
+
+.markdown-preview.dark .hljs-keyword {
+  color: #ff7b72;
+}
+
+.markdown-preview.dark .hljs-function {
+  color: #d2a8ff;
+}
+
+.markdown-preview.dark .hljs-number {
+  color: #79c0ff;
+}
+
+.markdown-preview.dark .hljs-variable,
+.markdown-preview.dark .hljs-template-variable {
+  color: #ffa657;
+}
+
+/* 深色引用 */
+.markdown-preview.dark blockquote {
+  color: #8b949e;
+  border-left-color: #3b434b;
+}
+
+/* 深色表格 */
+.markdown-preview.dark table th,
+.markdown-preview.dark table td {
+  border-color: #30363d;
+}
+
+.markdown-preview.dark table th {
+  background-color: #21262d;
+}
+
+.markdown-preview.dark table tr {
+  background-color: #0d1117;
+  border-top-color: #30363d;
+}
+
+.markdown-preview.dark table tr:nth-child(2n) {
+  background-color: #161b22;
+}
+
+/* 深色链接 */
+.markdown-preview.dark a {
+  color: #58a6ff;
+}
+
+/* 深色分割线 */
+.markdown-preview.dark hr {
+  background-color: #30363d;
+}
+
+/* 深色图片 */
+.markdown-preview.dark img {
+  background-color: transparent;
+}
+
+/* 深色脚注 */
+.markdown-preview.dark .footnotes {
+  border-top-color: #30363d;
+}
+
+/* 深色容器 */
+.markdown-preview.dark .custom-container-tip {
+  background-color: rgba(56, 139, 253, 0.1);
+  border-left-color: #58a6ff;
+}
+
+.markdown-preview.dark .custom-container-tip .custom-container-title {
+  color: #58a6ff;
+}
+
+.markdown-preview.dark .custom-container-warning {
+  background-color: rgba(210, 153, 34, 0.1);
+  border-left-color: #d29b21;
+}
+
+.markdown-preview.dark .custom-container-warning .custom-container-title {
+  color: #d29b21;
+}
+
+.markdown-preview.dark .custom-container-danger {
+  background-color: rgba(248, 81, 73, 0.1);
+  border-left-color: #f85149;
+}
+
+.markdown-preview.dark .custom-container-danger .custom-container-title {
+  color: #f85149;
+}
+
+.markdown-preview.dark .custom-container-info {
+  background-color: rgba(56, 139, 253, 0.1);
+  border-left-color: #58a6ff;
+}
+
+.markdown-preview.dark .custom-container-info .custom-container-title {
+  color: #58a6ff;
+}
+
+.markdown-preview.dark .custom-container-note {
+  background-color: #161b22;
+  border-left-color: #8b949e;
+}
+
+.markdown-preview.dark .custom-container-note .custom-container-title {
+  color: #8b949e;
+}
+
+/* 深色删除线 */
+.markdown-preview.dark del {
+  color: #8b949e;
+}
+
+/* 深色标记/高亮 */
+.markdown-preview.dark mark {
+  background-color: rgba(210, 153, 34, 0.4);
+  color: #c9d1d9;
+}
+
+/* 深色键盘按键 */
+.markdown-preview.dark kbd {
+  background-color: #21262d;
+  border-color: #30363d;
+  box-shadow: inset 0 -1px 0 #30363d;
+}
+
+/* ============ 响应式调整 ============ */
+
+@media (max-width: 768px) {
+  .markdown-preview {
+    padding: 12px;
+    font-size: 13px;
+  }
+
+  .markdown-preview h1 {
+    font-size: 1.75em;
+  }
+
+  .markdown-preview h2 {
+    font-size: 1.375em;
+  }
+
+  .markdown-preview table {
+    display: block;
+    overflow-x: auto;
+  }
+}
+
+/* ============ 打印样式 ============ */
+
+@media print {
+  .markdown-preview {
+    padding: 0;
+    background-color: #ffffff;
+    color: #000000;
+  }
+
+  .markdown-preview pre,
+  .markdown-preview code {
+    background-color: #f5f5f5;
+  }
+
+  .markdown-preview a {
+    color: #000000;
+    text-decoration: underline;
+  }
+}
