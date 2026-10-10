@@ -104,6 +104,33 @@ function focus() {
 }
 
 /**
+ * 滚动到指定行并设置光标位置
+ * @param {number} lineNumber - 行号（从 1 开始）
+ */
+function scrollToLine(lineNumber) {
+  if (!editorView) return
+  const doc = editorView.state.doc
+  if (lineNumber < 1 || lineNumber > doc.lines) return
+
+  const line = doc.line(lineNumber)
+  const pos = line.from
+
+  // 设置光标位置
+  editorView.dispatch({
+    selection: { anchor: pos, head: pos }
+  })
+
+  // 滚动到目标行附近
+  const dom = editorView.domAtPos(pos)
+  if (dom.node) {
+    const el = dom.node.nodeType === 3 ? dom.node.parentElement : dom.node
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }
+}
+
+/**
  * 初始化编辑器
  * 创建 EditorView 实例并挂载到 DOM
  */
@@ -274,7 +301,8 @@ onBeforeUnmount(() => {
 defineExpose({
   getContent,
   setContent,
-  focus
+  focus,
+  scrollToLine
 })
 </script>
 

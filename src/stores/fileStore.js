@@ -475,6 +475,40 @@ export const useFileStore = defineStore('file', () => {
   }
 
   /**
+   * 重新从磁盘加载指定文件的内容（刷新）
+   * 用于外部程序修改文件后同步最新版本
+   * @param {string} filePath - 文件路径
+   * @returns {Promise<{success: boolean, error?: string}>}
+   */
+  async function reloadFile(filePath) {
+    if (!filePath) {
+      return { success: false, error: '文件路径不能为空' }
+    }
+
+    const file = openFiles.value.find(f => f.path === filePath)
+    if (!file) {
+      return { success: false, error: '文件未打开' }
+    }
+
+    const result = await readFileContent(filePath)
+    if (!result.success) {
+      console.error('[fileStore] 重新加载文件失败:', result.error)
+      return { success: false, error: result.error }
+    }
+
+    const newContent = result.data
+
+    // 更新内存中的文件内容和原始内容
+    file.content = newContent
+    file.originalContent = newContent
+
+    // 清除修改标记（内容已与磁盘同步）
+    modifiedFiles.value.delete(filePath)
+
+    return { success: true }
+  }
+
+  /**
    * 关闭当前文件夹，清空所有文件相关状态
    */
   function closeFolder() {
@@ -512,6 +546,7 @@ export const useFileStore = defineStore('file', () => {
     closeFile,
     saveFile,
     updateFileContent,
+    reloadFile,
     toggleBookmark,
     createFile,
     createFolder,

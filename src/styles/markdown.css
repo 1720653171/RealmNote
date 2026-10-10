@@ -1,20 +1,27 @@
 /* Markdown 预览样式 */
-/* 浅色和深色主题支持 */
+/* 参考 Typora、思源笔记、Obsidian 设计理念优化 */
 
 /* ============ 基础容器样式 ============ */
 
 .markdown-preview {
-  padding: 20px;
-  line-height: 1.6;
+  padding: 24px 32px;
+  line-height: 1.8;
   font-size: 14px;
   overflow-y: auto;
   height: 100%;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  /* 优化中文字体栈，优先使用系统默认字体 */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+               "Noto Sans SC", "PingFang SC", "Microsoft YaHei",
+               "Helvetica Neue", Helvetica, Arial, sans-serif,
+               "Apple Color Emoji", "Segoe UI Emoji";
   color: #24292f;
   background-color: #ffffff;
+  letter-spacing: 0.02em;
+  word-wrap: break-word;
 }
 
 /* ============ 标题样式 ============ */
+/* 参考 Typora 的标题层次设计 */
 
 .markdown-preview h1,
 .markdown-preview h2,
@@ -22,22 +29,24 @@
 .markdown-preview h4,
 .markdown-preview h5,
 .markdown-preview h6 {
-  margin-top: 24px;
-  margin-bottom: 16px;
+  margin-top: 1.5em;
+  margin-bottom: 0.6em;
   font-weight: 600;
-  line-height: 1.25;
+  line-height: 1.3;
+  color: #1a1a1a;
 }
 
 .markdown-preview h1 {
   font-size: 2em;
-  border-bottom: 1px solid #d0d7de;
-  padding-bottom: 0.3em;
+  margin-top: 1em;
+  padding-bottom: 0.4em;
+  border-bottom: 2px solid #e1e4e8;
 }
 
 .markdown-preview h2 {
   font-size: 1.5em;
-  border-bottom: 1px solid #d0d7de;
   padding-bottom: 0.3em;
+  border-bottom: 1px solid #e1e4e8;
 }
 
 .markdown-preview h3 {
@@ -45,23 +54,30 @@
 }
 
 .markdown-preview h4 {
-  font-size: 1em;
+  font-size: 1.1em;
 }
 
 .markdown-preview h5 {
-  font-size: 0.875em;
+  font-size: 1em;
 }
 
 .markdown-preview h6 {
-  font-size: 0.85em;
+  font-size: 0.9em;
   color: #57606a;
+}
+
+/* 第一个标题不需要上边距 */
+.markdown-preview > h1:first-child,
+.markdown-preview > h2:first-child {
+  margin-top: 0;
 }
 
 /* ============ 段落样式 ============ */
 
 .markdown-preview p {
   margin-top: 0;
-  margin-bottom: 16px;
+  margin-bottom: 1.2em;
+  text-align: justify;
 }
 
 /* ============ 列表样式 ============ */
@@ -69,56 +85,64 @@
 .markdown-preview ul,
 .markdown-preview ol {
   margin-top: 0;
-  margin-bottom: 16px;
+  margin-bottom: 1em;
   padding-left: 2em;
 }
 
 .markdown-preview li {
-  margin-top: 0.25em;
-}
-
-.markdown-preview li + li {
-  margin-top: 0.25em;
+  margin-top: 0.3em;
+  margin-bottom: 0.3em;
+  line-height: 1.7;
 }
 
 .markdown-preview ul ul,
 .markdown-preview ul ol,
 .markdown-preview ol ol,
 .markdown-preview ol ul {
-  margin-top: 0;
-  margin-bottom: 0;
+  margin-top: 0.3em;
+  margin-bottom: 0.3em;
+}
+
+/* 列表项内的段落 */
+.markdown-preview li > p {
+  margin-bottom: 0.3em;
 }
 
 /* ============ 代码样式 ============ */
+/* 参考 Obsidian 代码块设计 */
 
 .markdown-preview code {
   padding: 0.2em 0.4em;
-  margin: 0;
-  font-size: 85%;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  margin: 0 2px;
+  font-size: 0.9em;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+               "Liberation Mono", "Courier New", monospace;
   background-color: rgba(175, 184, 193, 0.2);
-  border-radius: 6px;
+  border-radius: 4px;
 }
 
 .markdown-preview pre {
-  padding: 16px;
-  overflow: auto;
-  line-height: 1.45;
-  font-size: 85%;
+  padding: 16px 20px;
+  overflow-x: auto;
+  line-height: 1.5;
+  font-size: 0.9em;
   background-color: #f6f8fa;
-  border-radius: 6px;
-  margin-bottom: 16px;
+  border-radius: 8px;
+  margin: 1.2em 0;
+  border: 1px solid #e1e4e8;
 }
 
 .markdown-preview pre code {
   background: transparent;
   padding: 0;
-  font-size: 100%;
+  margin: 0;
+  font-size: 1em;
+  border-radius: 0;
 }
 
-/* 代码高亮 - highlight.js 样式 */
+/* 代码高亮 - highlight.js 样式优化 */
 .markdown-preview .hljs {
-  background: #f6f8fa;
+  background: transparent;
 }
 
 .markdown-preview .hljs-keyword,
@@ -128,7 +152,7 @@
 .markdown-preview .hljs-doctag,
 .markdown-preview .hljs-name,
 .markdown-preview .hljs-strong {
-  font-weight: bold;
+  font-weight: 600;
 }
 
 .markdown-preview .hljs-string,
@@ -159,48 +183,72 @@
   color: #953800;
 }
 
+.markdown-preview .hljs-built_in {
+  color: #0550ae;
+}
+
+.markdown-preview .hljs-class .hljs-title {
+  color: #8250df;
+}
+
 /* ============ 引用样式 ============ */
+/* 参考 Notion 引用块设计 */
 
 .markdown-preview blockquote {
-  padding: 0 1em;
+  padding: 0.8em 1.2em;
+  margin: 1em 0;
   color: #57606a;
-  border-left: 0.25em solid #d0d7de;
-  margin: 0 0 16px 0;
+  border-left: 4px solid #0969da;
+  background-color: rgba(9, 105, 218, 0.05);
+  border-radius: 0 6px 6px 0;
 }
 
 .markdown-preview blockquote p {
   color: inherit;
+  margin-bottom: 0;
+}
+
+.markdown-preview blockquote p:not(:last-child) {
+  margin-bottom: 0.5em;
 }
 
 /* ============ 表格样式 ============ */
+/* 参考 Obsidian 表格设计 */
 
 .markdown-preview table {
   border-spacing: 0;
   border-collapse: collapse;
-  margin-bottom: 16px;
+  margin: 1.2em 0;
   width: 100%;
   display: block;
   overflow-x: auto;
+  border-radius: 6px;
+  border: 1px solid #d0d7de;
 }
 
 .markdown-preview table th,
 .markdown-preview table td {
-  padding: 6px 13px;
+  padding: 10px 14px;
   border: 1px solid #d0d7de;
+  text-align: left;
 }
 
 .markdown-preview table th {
   font-weight: 600;
   background-color: #f6f8fa;
+  color: #24292f;
 }
 
 .markdown-preview table tr {
   background-color: #ffffff;
-  border-top: 1px solid #d8dee4;
 }
 
 .markdown-preview table tr:nth-child(2n) {
   background-color: #f6f8fa;
+}
+
+.markdown-preview table tr:hover {
+  background-color: #f0f3f6;
 }
 
 /* ============ 链接样式 ============ */
@@ -208,29 +256,40 @@
 .markdown-preview a {
   color: #0969da;
   text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s ease;
 }
 
 .markdown-preview a:hover {
-  text-decoration: underline;
+  border-bottom-color: #0969da;
 }
 
 /* ============ 图片样式 ============ */
 
 .markdown-preview img {
   max-width: 100%;
+  height: auto;
   box-sizing: content-box;
   background-color: #ffffff;
-  border-radius: 6px;
+  border-radius: 8px;
+  margin: 1em 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.markdown-preview p > img:only-child {
+  display: block;
+  margin: 1em auto;
 }
 
 /* ============ 分割线样式 ============ */
 
 .markdown-preview hr {
-  height: 0.25em;
+  height: 2px;
   padding: 0;
-  margin: 24px 0;
-  background-color: #d0d7de;
+  margin: 2em 0;
+  background-color: #e1e4e8;
   border: 0;
+  border-radius: 1px;
 }
 
 /* ============ 任务列表样式 ============ */
@@ -248,15 +307,19 @@
 .markdown-preview .task-list-item input[type="checkbox"] {
   margin: 0 0.5em 0.25em -1.6em;
   vertical-align: middle;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
 }
 
 /* ============ 脚注样式 ============ */
 
 .markdown-preview .footnotes {
-  margin-top: 32px;
-  padding-top: 16px;
-  border-top: 1px solid #d0d7de;
+  margin-top: 2em;
+  padding-top: 1em;
+  border-top: 2px solid #e1e4e8;
   font-size: 0.9em;
+  color: #57606a;
 }
 
 .markdown-preview .footnote-ref {
@@ -267,98 +330,120 @@
 .markdown-preview .footnote-backref {
   font-size: 0.75em;
   margin-left: 4px;
+  color: #0969da;
 }
 
 /* ============ 自定义容器样式 ============ */
+/* 参考 Notion Callout 设计 */
 
 .markdown-preview .custom-container {
-  padding: 16px;
-  margin-bottom: 16px;
-  border-radius: 6px;
+  padding: 16px 20px;
+  margin: 1em 0;
+  border-radius: 8px;
+  border-left: 4px solid;
 }
 
 .markdown-preview .custom-container-title {
   font-weight: 600;
   margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.markdown-preview .custom-container p:last-child {
+  margin-bottom: 0;
 }
 
 /* 提示容器 */
 .markdown-preview .custom-container-tip {
-  background-color: #ddf4ff;
-  border-left: 4px solid #0969da;
+  background-color: #e8f4fd;
+  border-left-color: #0969da;
 }
 
 .markdown-preview .custom-container-tip .custom-container-title {
-  color: #0969da;
+  color: #0550ae;
 }
 
 /* 警告容器 */
 .markdown-preview .custom-container-warning {
-  background-color: #fff8c5;
-  border-left: 4px solid #9a6700;
+  background-color: #fff8e6;
+  border-left-color: #bf8700;
 }
 
 .markdown-preview .custom-container-warning .custom-container-title {
-  color: #9a6700;
+  color: #744600;
 }
 
 /* 危险容器 */
 .markdown-preview .custom-container-danger {
   background-color: #ffebe9;
-  border-left: 4px solid #cf222e;
+  border-left-color: #cf222e;
 }
 
 .markdown-preview .custom-container-danger .custom-container-title {
-  color: #cf222e;
+  color: #a0111f;
 }
 
 /* 信息容器 */
 .markdown-preview .custom-container-info {
-  background-color: #ddf4ff;
-  border-left: 4px solid #0969da;
+  background-color: #e8f4fd;
+  border-left-color: #0969da;
 }
 
 .markdown-preview .custom-container-info .custom-container-title {
-  color: #0969da;
+  color: #0550ae;
 }
 
 /* 备注容器 */
 .markdown-preview .custom-container-note {
   background-color: #f6f8fa;
-  border-left: 4px solid #57606a;
+  border-left-color: #57606a;
 }
 
 .markdown-preview .custom-container-note .custom-container-title {
-  color: #57606a;
+  color: #3d4248;
 }
 
 /* ============ 删除线样式 ============ */
 
 .markdown-preview del {
   text-decoration: line-through;
-  color: #57606a;
+  color: #8b949e;
 }
 
 /* ============ 标记/高亮样式 ============ */
 
 .markdown-preview mark {
-  background-color: #fcf3a2;
-  padding: 0.1em 0.2em;
+  background-color: #fff3a3;
+  padding: 0.1em 0.3em;
   border-radius: 3px;
+  color: inherit;
 }
 
 /* ============ 键盘按键样式 ============ */
 
 .markdown-preview kbd {
   display: inline-block;
-  padding: 0.2em 0.4em;
-  font-size: 85%;
+  padding: 3px 6px;
+  font-size: 0.85em;
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   line-height: 1;
   background-color: #f6f8fa;
-  border: 1px solid rgba(175, 184, 193, 0.4);
-  border-radius: 6px;
-  box-shadow: inset 0 -1px 0 rgba(175, 184, 193, 0.4);
+  border: 1px solid #d0d7de;
+  border-radius: 4px;
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* ============ 强调样式 ============ */
+
+.markdown-preview strong {
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.markdown-preview em {
+  font-style: italic;
 }
 
 /* ============ 深色主题样式 ============ */
@@ -369,6 +454,14 @@
 }
 
 /* 深色标题 */
+.markdown-preview.dark h1,
+.markdown-preview.dark h2,
+.markdown-preview.dark h3,
+.markdown-preview.dark h4,
+.markdown-preview.dark h5 {
+  color: #f0f6fc;
+}
+
 .markdown-preview.dark h1,
 .markdown-preview.dark h2 {
   border-bottom-color: #30363d;
@@ -385,10 +478,11 @@
 
 .markdown-preview.dark pre {
   background-color: #161b22;
+  border-color: #30363d;
 }
 
 .markdown-preview.dark .hljs {
-  background: #161b22;
+  background: transparent;
 }
 
 .markdown-preview.dark .hljs-string,
@@ -418,13 +512,22 @@
   color: #ffa657;
 }
 
+.markdown-preview.dark .hljs-built_in {
+  color: #79c0ff;
+}
+
 /* 深色引用 */
 .markdown-preview.dark blockquote {
   color: #8b949e;
-  border-left-color: #3b434b;
+  border-left-color: #58a6ff;
+  background-color: rgba(88, 166, 255, 0.1);
 }
 
 /* 深色表格 */
+.markdown-preview.dark table {
+  border-color: #30363d;
+}
+
 .markdown-preview.dark table th,
 .markdown-preview.dark table td {
   border-color: #30363d;
@@ -432,20 +535,28 @@
 
 .markdown-preview.dark table th {
   background-color: #21262d;
+  color: #f0f6fc;
 }
 
 .markdown-preview.dark table tr {
   background-color: #0d1117;
-  border-top-color: #30363d;
 }
 
 .markdown-preview.dark table tr:nth-child(2n) {
   background-color: #161b22;
 }
 
+.markdown-preview.dark table tr:hover {
+  background-color: #21262d;
+}
+
 /* 深色链接 */
 .markdown-preview.dark a {
   color: #58a6ff;
+}
+
+.markdown-preview.dark a:hover {
+  border-bottom-color: #58a6ff;
 }
 
 /* 深色分割线 */
@@ -456,6 +567,7 @@
 /* 深色图片 */
 .markdown-preview.dark img {
   background-color: transparent;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 /* 深色脚注 */
@@ -465,39 +577,39 @@
 
 /* 深色容器 */
 .markdown-preview.dark .custom-container-tip {
-  background-color: rgba(56, 139, 253, 0.1);
+  background-color: rgba(56, 139, 253, 0.15);
   border-left-color: #58a6ff;
 }
 
 .markdown-preview.dark .custom-container-tip .custom-container-title {
-  color: #58a6ff;
+  color: #79c0ff;
 }
 
 .markdown-preview.dark .custom-container-warning {
-  background-color: rgba(210, 153, 34, 0.1);
+  background-color: rgba(210, 153, 34, 0.15);
   border-left-color: #d29b21;
 }
 
 .markdown-preview.dark .custom-container-warning .custom-container-title {
-  color: #d29b21;
+  color: #e3b341;
 }
 
 .markdown-preview.dark .custom-container-danger {
-  background-color: rgba(248, 81, 73, 0.1);
+  background-color: rgba(248, 81, 73, 0.15);
   border-left-color: #f85149;
 }
 
 .markdown-preview.dark .custom-container-danger .custom-container-title {
-  color: #f85149;
+  color: #ff7b72;
 }
 
 .markdown-preview.dark .custom-container-info {
-  background-color: rgba(56, 139, 253, 0.1);
+  background-color: rgba(56, 139, 253, 0.15);
   border-left-color: #58a6ff;
 }
 
 .markdown-preview.dark .custom-container-info .custom-container-title {
-  color: #58a6ff;
+  color: #79c0ff;
 }
 
 .markdown-preview.dark .custom-container-note {
@@ -511,7 +623,7 @@
 
 /* 深色删除线 */
 .markdown-preview.dark del {
-  color: #8b949e;
+  color: #6e7681;
 }
 
 /* 深色标记/高亮 */
@@ -527,11 +639,16 @@
   box-shadow: inset 0 -1px 0 #30363d;
 }
 
+/* 深色强调 */
+.markdown-preview.dark strong {
+  color: #f0f6fc;
+}
+
 /* ============ 响应式调整 ============ */
 
 @media (max-width: 768px) {
   .markdown-preview {
-    padding: 12px;
+    padding: 16px;
     font-size: 13px;
   }
 
@@ -540,12 +657,15 @@
   }
 
   .markdown-preview h2 {
-    font-size: 1.375em;
+    font-size: 1.35em;
   }
 
-  .markdown-preview table {
-    display: block;
-    overflow-x: auto;
+  .markdown-preview h3 {
+    font-size: 1.15em;
+  }
+
+  .markdown-preview pre {
+    padding: 12px 14px;
   }
 }
 
@@ -556,15 +676,68 @@
     padding: 0;
     background-color: #ffffff;
     color: #000000;
+    font-size: 12pt;
+    line-height: 1.6;
+  }
+
+  .markdown-preview h1 {
+    font-size: 20pt;
+    border-bottom-color: #000000;
+  }
+
+  .markdown-preview h2 {
+    font-size: 16pt;
+    border-bottom-color: #000000;
+  }
+
+  .markdown-preview h3 {
+    font-size: 14pt;
   }
 
   .markdown-preview pre,
   .markdown-preview code {
     background-color: #f5f5f5;
+    border: none;
   }
 
   .markdown-preview a {
     color: #000000;
     text-decoration: underline;
   }
+
+  .markdown-preview img {
+    box-shadow: none;
+  }
+
+  .markdown-preview table {
+    border-color: #000000;
+  }
+}
+
+/* ============ 滚动条样式 ============ */
+
+.markdown-preview::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.markdown-preview::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.markdown-preview::-webkit-scrollbar-thumb {
+  background-color: rgba(144, 144, 144, 0.3);
+  border-radius: 4px;
+}
+
+.markdown-preview::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(144, 144, 144, 0.5);
+}
+
+.markdown-preview.dark::-webkit-scrollbar-thumb {
+  background-color: rgba(139, 148, 158, 0.3);
+}
+
+.markdown-preview.dark::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(139, 148, 158, 0.5);
 }

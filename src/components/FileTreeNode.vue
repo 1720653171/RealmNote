@@ -80,7 +80,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, inject, watch, onMounted } from 'vue'
 import { getFileType } from '@/utils/fileSystem'
 
 // ============================================================
@@ -121,11 +121,30 @@ const emit = defineEmits([
 ])
 
 // ============================================================
+// Inject
+// ============================================================
+
+/** 设置存储 */
+const settingsStore = inject('settingsStore')
+
+// ============================================================
 // State
 // ============================================================
 
-/** 文件夹是否展开 */
-const isExpanded = ref(false)
+/** 文件夹是否展开 - 使用计算属性从 settingsStore 获取 */
+const isExpanded = computed({
+  get() {
+    return settingsStore?.expandedPaths?.includes(props.node.path) ?? false
+  },
+  set(value) {
+    if (!settingsStore) return
+    if (value) {
+      settingsStore.addExpandedPath(props.node.path)
+    } else {
+      settingsStore.removeExpandedPath(props.node.path)
+    }
+  }
+})
 
 /** 拖拽状态 */
 const isDragging = ref(false)

@@ -1,16 +1,35 @@
 <template>
   <div
     class="sidebar"
+    :class="{ 'is-collapsed': !modelValue }"
     :style="{ width: `${width}px` }"
   >
     <!-- 拖拽调整宽度手柄 -->
     <div
+      v-if="modelValue"
       class="sidebar-resize-handle"
       @mousedown="onResizeStart"
     />
 
+    <!-- 折叠/展开切换按钮 -->
+    <div class="sidebar-toggle-area">
+      <v-btn
+        icon
+        size="small"
+        variant="text"
+        density="compact"
+        class="sidebar-toggle-btn"
+        :title="modelValue ? '折叠侧边栏 (Ctrl+B)' : '展开侧边栏 (Ctrl+B)'"
+        @click="onToggleCollapse"
+      >
+        <v-icon size="18">
+          {{ modelValue ? 'mdi-chevron-left' : 'mdi-chevron-right' }}
+        </v-icon>
+      </v-btn>
+    </div>
+
     <!-- 主内容区域 -->
-    <div class="sidebar-content">
+    <div class="sidebar-content" v-show="modelValue">
       <!-- 文件树区域（主要部分） -->
       <div class="file-tree-section">
         <FileTree
@@ -157,6 +176,13 @@ const bookmarkedFilesList = computed(() => {
 // ============================================================
 
 /**
+ * 切换侧边栏折叠/展开状态
+ */
+function onToggleCollapse() {
+  emit('update:modelValue', !props.modelValue)
+}
+
+/**
  * 切换收藏列表展开/折叠状态
  */
 function toggleBookmarks() {
@@ -288,6 +314,37 @@ onUnmounted(() => {
   border-right: 1px solid rgba(0, 0, 0, 0.08);
   min-width: 200px;
   max-width: 500px;
+  transition: min-width 0.2s ease;
+}
+
+/* 折叠状态：宽度收缩到 48px */
+.sidebar.is-collapsed {
+  min-width: 48px;
+  max-width: 48px;
+}
+
+/* 折叠按钮容器 */
+.sidebar-toggle-area {
+  display: flex;
+  justify-content: flex-end;
+  padding: 4px 6px;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  min-height: 36px;
+}
+
+.sidebar-toggle-btn {
+  opacity: 0.5;
+  transition: opacity 0.15s ease;
+}
+
+.sidebar-toggle-btn:hover {
+  opacity: 1;
+}
+
+/* 暗色主题适配 */
+:deep(.v-theme--dark) .sidebar-toggle-area {
+  border-bottom-color: rgba(255, 255, 255, 0.06);
 }
 
 /* 调整宽度手柄 */

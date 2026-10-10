@@ -4,6 +4,7 @@ import footnote from 'markdown-it-footnote'
 import taskLists from 'markdown-it-task-lists'
 import { full as emoji } from 'markdown-it-emoji'
 import hljs from 'highlight.js'
+import { slugify } from './toc.js'
 
 /**
  * 创建并配置 markdown-it 渲染器实例
@@ -59,6 +60,53 @@ function createMarkdownRenderer(options = {}) {
 }
 
 /**
+ * 标题锚点插件：为渲染的标题元素自动添加 id 属性
+ * ID 生成规则与 toc.js 中的 slugify() 完全一致
+ * 通过 env.headingIds 处理同一文档中的重复标题
+ * @param {MarkdownIt} md - markdown-it 实例
+ */
+function headingAnchorPlugin(md) {
+  // 保存默认的 heading_open 渲染规则（如果存在其他插件已覆盖则链式调用）
+  const defaultRender =
+    md.renderer.rules.heading_open ||
+    function (tokens, idx, options, _env, self) {
+      return self.renderToken(tokens, idx, options)
+    }
+
+  md.renderer.rules.heading_open = function (tokens, idx, options, env, self) {
+    // 获取标题文本：从下一个 token（inline 类型）的 children 中提取纯文本
+    const inlineToken = tokens[idx + 1]
+    let text = ''
+    if (inlineToken && inlineToken.children) {
+      text = inlineToken.children
+        .filter(t => t.type === 'text' || t.type === 'code_inline')
+        .map(t => t.content)
+        .join('')
+    }
+
+    // 生成锚点 ID
+    let id = slugify(text)
+
+    // 通过 env.headingIds 处理重复标题
+    if (!env.headingIds) {
+      env.headingIds = new Map()
+    }
+    if (env.headingIds.has(id)) {
+      const count = env.headingIds.get(id) + 1
+      env.headingIds.set(id, count)
+      id = `${id}-${count}`
+    } else {
+      env.headingIds.set(id, 1)
+    }
+
+    // 设置 id 属性
+    tokens[idx].attrSet('id', id)
+
+    return defaultRender(tokens, idx, options, env, self)
+  }
+}
+
+/**
  * 配置 markdown-it 扩展插件
  * @param {MarkdownIt} md - markdown-it 实例
  */
@@ -101,6 +149,9 @@ function configurePlugins(md) {
   // 表情符号插件
   md.use(emoji)
 
+  // 标题锚点插件：为标题添加 id 属性
+  md.use(headingAnchorPlugin)
+
   // 链接处理：外部链接新窗口打开
   configureLinkTarget(md)
 }
@@ -140,6 +191,10 @@ const md = createMarkdownRenderer()
 export function renderMarkdown(source, env = {}) {
   if (!source || typeof source !== 'string') {
     return ''
+  }
+  // 初始化标题 ID 计数器，确保每次渲染独立计数
+  if (!env.headingIds) {
+    env.headingIds = new Map()
   }
   return md.render(source, env)
 }

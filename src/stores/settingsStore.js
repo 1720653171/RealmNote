@@ -10,6 +10,8 @@ const DEFAULT_SETTINGS = {
   recentFiles: [],
   sidebarWidth: 260,
   fontSize: 14,
+  previewZoomLevel: 100, // 预览缩放比例 (50-200)
+  expandedPaths: [], // 文件树展开的路径
   autoSave: false,
   autoSaveDelay: 3000,
   showLineNumbers: true,
@@ -48,6 +50,12 @@ export const useSettingsStore = defineStore('settings', () => {
 
   /** 编辑器字体大小 */
   const fontSize = ref(DEFAULT_SETTINGS.fontSize)
+
+  /** 预览缩放比例 (50-200) */
+  const previewZoomLevel = ref(DEFAULT_SETTINGS.previewZoomLevel)
+
+  /** 文件树展开的路径列表 */
+  const expandedPaths = ref([...DEFAULT_SETTINGS.expandedPaths])
 
   /** 自动保存开关 */
   const autoSave = ref(DEFAULT_SETTINGS.autoSave)
@@ -91,6 +99,8 @@ export const useSettingsStore = defineStore('settings', () => {
         if (Array.isArray(parsed.recentFiles)) recentFiles.value = parsed.recentFiles
         if (parsed.sidebarWidth !== undefined) sidebarWidth.value = parsed.sidebarWidth
         if (parsed.fontSize !== undefined) fontSize.value = parsed.fontSize
+        if (parsed.previewZoomLevel !== undefined) previewZoomLevel.value = parsed.previewZoomLevel
+        if (Array.isArray(parsed.expandedPaths)) expandedPaths.value = parsed.expandedPaths
         if (parsed.autoSave !== undefined) autoSave.value = parsed.autoSave
         if (parsed.autoSaveDelay !== undefined) autoSaveDelay.value = parsed.autoSaveDelay
         if (parsed.showLineNumbers !== undefined) showLineNumbers.value = parsed.showLineNumbers
@@ -118,6 +128,8 @@ export const useSettingsStore = defineStore('settings', () => {
         recentFiles: recentFiles.value,
         sidebarWidth: sidebarWidth.value,
         fontSize: fontSize.value,
+        previewZoomLevel: previewZoomLevel.value,
+        expandedPaths: expandedPaths.value,
         autoSave: autoSave.value,
         autoSaveDelay: autoSaveDelay.value,
         showLineNumbers: showLineNumbers.value,
@@ -275,6 +287,72 @@ export const useSettingsStore = defineStore('settings', () => {
   }
 
   /**
+   * 更新预览缩放比例
+   * @param {number} level - 缩放比例（50-200）
+   */
+  function updatePreviewZoomLevel(level) {
+    if (typeof level === 'number' && level >= 50 && level <= 200) {
+      previewZoomLevel.value = level
+      saveSettings()
+    }
+  }
+
+  /**
+   * 放大预览（增加10%）
+   */
+  function zoomIn() {
+    const newLevel = Math.min(200, previewZoomLevel.value + 10)
+    updatePreviewZoomLevel(newLevel)
+  }
+
+  /**
+   * 缩小预览（减少10%）
+   */
+  function zoomOut() {
+    const newLevel = Math.max(50, previewZoomLevel.value - 10)
+    updatePreviewZoomLevel(newLevel)
+  }
+
+  /**
+   * 重置预览缩放为默认值
+   */
+  function resetZoom() {
+    updatePreviewZoomLevel(100)
+  }
+
+  /**
+   * 更新文件树展开路径
+   * @param {string[]} paths - 展开的路径列表
+   */
+  function updateExpandedPaths(paths) {
+    expandedPaths.value = paths
+    saveSettings()
+  }
+
+  /**
+   * 添加展开路径
+   * @param {string} path - 要添加的路径
+   */
+  function addExpandedPath(path) {
+    if (!expandedPaths.value.includes(path)) {
+      expandedPaths.value.push(path)
+      saveSettings()
+    }
+  }
+
+  /**
+   * 移除展开路径
+   * @param {string} path - 要移除的路径
+   */
+  function removeExpandedPath(path) {
+    const index = expandedPaths.value.indexOf(path)
+    if (index !== -1) {
+      expandedPaths.value.splice(index, 1)
+      saveSettings()
+    }
+  }
+
+  /**
    * 更新自动保存开关
    * @param {boolean} enabled - 是否启用自动保存
    */
@@ -334,6 +412,8 @@ export const useSettingsStore = defineStore('settings', () => {
     recentFiles.value = [...DEFAULT_SETTINGS.recentFiles]
     sidebarWidth.value = DEFAULT_SETTINGS.sidebarWidth
     fontSize.value = DEFAULT_SETTINGS.fontSize
+    previewZoomLevel.value = DEFAULT_SETTINGS.previewZoomLevel
+    expandedPaths.value = [...DEFAULT_SETTINGS.expandedPaths]
     autoSave.value = DEFAULT_SETTINGS.autoSave
     autoSaveDelay.value = DEFAULT_SETTINGS.autoSaveDelay
     showLineNumbers.value = DEFAULT_SETTINGS.showLineNumbers
@@ -352,6 +432,8 @@ export const useSettingsStore = defineStore('settings', () => {
     recentFiles,
     sidebarWidth,
     fontSize,
+    previewZoomLevel,
+    expandedPaths,
     autoSave,
     autoSaveDelay,
     showLineNumbers,
@@ -374,6 +456,13 @@ export const useSettingsStore = defineStore('settings', () => {
     clearRecentFiles,
     updateSidebarWidth,
     updateFontSize,
+    updatePreviewZoomLevel,
+    zoomIn,
+    zoomOut,
+    resetZoom,
+    updateExpandedPaths,
+    addExpandedPath,
+    removeExpandedPath,
     updateAutoSave,
     updateAutoSaveDelay,
     updateShowLineNumbers,

@@ -9,7 +9,7 @@
         <!-- 左侧侧边栏 -->
         <Sidebar
           v-model="sidebarVisible"
-          :width="settingsStore.sidebarWidth"
+          :width="sidebarVisible ? settingsStore.sidebarWidth : 48"
           @update:width="onSidebarResize"
           @file-select="onFileSelect"
         />
@@ -29,11 +29,13 @@
               :theme="settingsStore.theme"
               :mode="settingsStore.editMode"
               :font-size="settingsStore.fontSize"
+              :zoom-level="settingsStore.previewZoomLevel"
               :modified="fileStore.isActiveFileModified"
               @update:content="onContentUpdate"
               @update:mode="onModeChange"
               @save="onSave"
               @theme-change="onThemeChange"
+              @reload="onReload"
             />
 
             <!-- 无打开文件时显示欢迎页面 -->
@@ -181,11 +183,15 @@ onMounted(() => {
 
   // 注册全局快捷键
   window.addEventListener('keydown', handleGlobalKeydown)
+
+  // 注册 Ctrl+滚轮 缩放事件
+  window.addEventListener('wheel', handleWheel, { passive: false })
 })
 
 onUnmounted(() => {
   // 清理事件监听
   window.removeEventListener('keydown', handleGlobalKeydown)
+  window.removeEventListener('wheel', handleWheel)
 
   // 清理自动保存定时器
   if (autoSaveTimer) {
@@ -250,6 +256,20 @@ async function onSave() {
 }
 
 /**
+ * 处理文件重载事件（从磁盘重新加载当前文件）
+ */
+async function onReload() {
+  if (!fileStore.activeFilePath) return
+
+  const result = await fileStore.reloadFile(fileStore.activeFilePath)
+  if (result.success) {
+    console.log('文件已刷新:', fileStore.activeFilePath)
+  } else {
+    console.error('刷新文件失败:', result.error)
+  }
+}
+
+/**
  * 处理编辑模式变更
  * @param {string} mode - 新的编辑模式
  */
@@ -281,7 +301,10 @@ function applyTheme(theme) {
  * @param {number} width - 新的宽度
  */
 function onSidebarResize(width) {
-  settingsStore.updateSidebarWidth(width)
+  // 折叠状态下不保存宽度
+  if (sidebarVisible.value) {
+    settingsStore.updateSidebarWidth(width)
+  }
 }
 
 /**
@@ -358,6 +381,29 @@ function handleGlobalKeydown(event) {
     event.preventDefault()
     sidebarVisible.value = !sidebarVisible.value
     return
+  }
+}
+
+/**
+ * 处理 Ctrl+滚轮 缩放事件
+ * @param {WheelEvent} event
+ */
+function handleWheel(event) {
+  // 只在 Ctrl 键按下时处理
+  if (!event.ctrlKey) return
+
+  // 阻止默认缩放行为
+  event.preventDefault()
+
+  // 判断滚动方向：deltaY > 0 表示向下滚动（缩小）
+  const delta = event.deltaY > 0 ? -10 : 10
+
+  // 计算新的缩放比例
+  const newLevel = Math.max(50, Math.min(200, settingsStore.previewZoomLevel + delta))
+
+  // 更新缩放比例
+  if (newLevel !== settingsStore.previewZoomLevel) {
+    settingsStore.updatePreviewZoomLevel(newLevel)
   }
 }
 </script>
