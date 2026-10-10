@@ -11,53 +11,55 @@
     "electron:preview": "vite build && electron ."
   },
   "dependencies": {
-    "vue": "^3.4.21",
-    "vuetify": "^3.5.8",
-    "pinia": "^2.1.7",
     "@mdi/font": "^7.4.47",
-    "@codemirror/state": "^6.4.1",
-    "@codemirror/view": "^6.26.1",
-    "@codemirror/commands": "^6.5.0",
-    "@codemirror/lang-markdown": "^6.2.5",
-    "@codemirror/theme-one-dark": "^6.1.2",
-    "@codemirror/language-data": "^6.5.0",
-    "markdown-it": "^14.1.0",
-    "markdown-it-container": "^4.0.0",
-    "markdown-it-footnote": "^4.0.0",
-    "markdown-it-task-lists": "^2.1.1",
-    "markdown-it-emoji": "^3.0.0",
-    "highlight.js": "^11.9.0"
+    "pinia": "^2.1.7",
+    "vditor": "^3.11.1",
+    "vue": "^3.4.21",
+    "vuetify": "^3.5.8"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.4",
-    "vite": "^5.2.0",
-    "vite-plugin-vuetify": "^2.0.3",
+    "concurrently": "^8.2.2",
     "electron": "^30.0.0",
     "electron-builder": "^24.13.3",
-    "concurrently": "^8.2.2",
+    "sharp": "^0.35.5",
+    "vite": "^5.2.0",
+    "vite-plugin-static-copy": "^2.3.2",
+    "vite-plugin-vuetify": "^2.0.3",
     "wait-on": "^7.2.0"
   },
   "build": {
-    "appId": "com.markdown.editor",
-    "productName": "Markdown Editor",
+    "appId": "com.realmnote.app",
+    "productName": "简域",
     "directories": {
       "output": "dist_electron"
     },
     "files": [
       "dist/**/*",
-      "electron/**/*"
+      "electron/**/*",
+      "assets/**/*"
     ],
     "win": {
+      "icon": "assets/icon.ico",
       "target": [
         {
           "target": "portable",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
         }
       ]
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "简域-Setup-${version}.${ext}"
     }
   }
 }

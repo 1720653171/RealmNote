@@ -27,12 +27,11 @@
               ref="editorRef"
               :content="fileStore.activeFileContent"
               :theme="settingsStore.theme"
-              :mode="settingsStore.editMode"
               :font-size="settingsStore.fontSize"
               :zoom-level="settingsStore.previewZoomLevel"
               :modified="fileStore.isActiveFileModified"
+              :file-key="fileStore.activeFilePath || ''"
               @update:content="onContentUpdate"
-              @update:mode="onModeChange"
               @save="onSave"
               @theme-change="onThemeChange"
               @reload="onReload"
@@ -44,7 +43,7 @@
                 <div class="welcome-icon">
                   <v-icon size="80" color="primary">mdi-language-markdown</v-icon>
                 </div>
-                <h1 class="welcome-title">Markdown Editor</h1>
+                <h1 class="welcome-title">简域</h1>
                 <p class="welcome-subtitle">一个简洁优雅的 Markdown 编辑器</p>
 
                 <!-- 快捷操作 -->
@@ -218,7 +217,7 @@ async function onFileSelect(fileInfo) {
 
     // 聚焦编辑器
     nextTick(() => {
-      editorRef.value?.focus()
+      editorRef.value?.focus?.()
     })
   } else {
     console.error('打开文件失败:', result.error)
@@ -267,14 +266,6 @@ async function onReload() {
   } else {
     console.error('刷新文件失败:', result.error)
   }
-}
-
-/**
- * 处理编辑模式变更
- * @param {string} mode - 新的编辑模式
- */
-function onModeChange(mode) {
-  settingsStore.updateEditMode(mode)
 }
 
 /**

@@ -46,7 +46,7 @@
 
     <!-- 应用标题和当前文件夹名称 -->
     <v-toolbar-title class="ml-2">
-      <span class="app-title">Markdown Editor</span>
+      <span class="app-title">简域</span>
       <span v-if="fileStore.currentFolder" class="folder-name">
         <v-icon size="16" class="mx-1">mdi-chevron-right</v-icon>
         {{ folderDisplayName }}

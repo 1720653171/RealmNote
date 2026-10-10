@@ -29,7 +29,7 @@
     <!-- 目录内容 -->
     <div class="toc-content" ref="tocContentRef">
       <!-- 空状态 -->
-      <div v-if="headings.length === 0" class="toc-empty">
+      <div v-if="safeHeadings.length === 0" class="toc-empty">
         <v-icon size="28" color="grey-lighten-1">mdi-text-box-outline</v-icon>
         <p class="empty-text">暂无标题</p>
       </div>
@@ -37,7 +37,7 @@
       <!-- 标题列表 -->
       <ul v-else class="toc-list">
         <li
-          v-for="(heading, index) in headings"
+          v-for="(heading, index) in safeHeadings"
           :key="`${heading.id}-${index}`"
           :class="[
             'toc-item',
@@ -56,7 +56,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onUnmounted } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 
 // ============ Props ============
 
@@ -87,6 +87,11 @@ const props = defineProps({
 // ============ Emits ============
 
 const emit = defineEmits(['close', 'navigate', 'update:width'])
+
+// ============ 防御性计算属性 ============
+
+/** 标题列表防御：确保始终为数组，避免异常数据导致渲染失败出现空白面板 */
+const safeHeadings = computed(() => (Array.isArray(props.headings) ? props.headings : []))
 
 // ============ Refs ============
 

@@ -17,7 +17,7 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js')
     },
     icon: path.join(__dirname, '../assets/icon.png'),
-    title: 'Markdown Editor'
+    title: '简域'
   })
 
   // 开发环境加载开发服务器
@@ -111,7 +111,7 @@ function createMenu() {
             dialog.showMessageBox(mainWindow, {
               type: 'info',
               title: '关于',
-              message: 'Markdown Editor',
+              message: '简域',
               detail: '版本 1.0.0\n一个简洁的 Markdown 文件浏览器与编辑器'
             })
           }

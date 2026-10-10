@@ -67,15 +67,12 @@
             <div class="setting-item">
               <div class="setting-label">默认编辑模式</div>
               <div class="setting-control">
-                <v-select
-                  :model-value="settingsStore.editMode"
-                  @update:model-value="onEditModeChange"
-                  :items="editModeOptions"
-                  item-title="label"
-                  item-value="value"
+                <v-text-field
+                  model-value="即时渲染 (IR)"
                   density="compact"
                   variant="outlined"
                   hide-details
+                  disabled
                   style="min-width: 160px"
                 />
               </div>
@@ -315,13 +312,6 @@ const confirmResetVisible = ref(false)
 /** 清除最近文件确认对话框是否可见 */
 const confirmClearVisible = ref(false)
 
-/** 编辑模式选项 */
-const editModeOptions = [
-  { label: '仅编辑', value: 'edit' },
-  { label: '仅预览', value: 'preview' },
-  { label: '分屏模式', value: 'split' }
-]
-
 // ============ Computed ============
 
 /** 自动保存延迟（秒） */
@@ -344,16 +334,6 @@ const recentCount = computed(() => {
 function onThemeChange(newTheme) {
   if (settingsStore) {
     settingsStore.updateTheme(newTheme)
-  }
-}
-
-/**
- * 编辑模式变更处理
- * @param {string} mode - 新编辑模式
- */
-function onEditModeChange(mode) {
-  if (settingsStore) {
-    settingsStore.updateEditMode(mode)
   }
 }
 

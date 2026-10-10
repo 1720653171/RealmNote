@@ -4,7 +4,20 @@ import { ref, watch } from 'vue'
 // 默认设置值
 const DEFAULT_SETTINGS = {
   theme: 'light',
-  editMode: 'split',
+  editMode: 'ir',
+  /**
+   * 编辑器快捷键配置
+   * 组合格式：修饰符小写用 '+' 连接（如 'ctrl+1'、'ctrl+shift+d'）
+   */
+  shortcuts: {
+    heading1: 'ctrl+1',
+    heading2: 'ctrl+2',
+    heading3: 'ctrl+3',
+    heading4: 'ctrl+4',
+    heading5: 'ctrl+5',
+    heading6: 'ctrl+6',
+    codeBlock: 'ctrl+d'
+  },
   windowBounds: { x: undefined, y: undefined, width: 1200, height: 800 },
   recentFolders: [],
   recentFiles: [],
@@ -35,6 +48,8 @@ export const useSettingsStore = defineStore('settings', () => {
 
   /** 编辑模式偏好 ('edit' | 'preview' | 'split') */
   const editMode = ref(DEFAULT_SETTINGS.editMode)
+  /** 编辑器快捷键配置 */
+  const shortcuts = ref(JSON.parse(JSON.stringify(DEFAULT_SETTINGS.shortcuts)))
 
   /** 窗口位置和大小 */
   const windowBounds = ref({ ...DEFAULT_SETTINGS.windowBounds })
@@ -91,7 +106,12 @@ export const useSettingsStore = defineStore('settings', () => {
         const parsed = JSON.parse(stored)
         // 逐项赋值，仅覆盖存在的键，保留默认值作为兜底
         if (parsed.theme !== undefined) theme.value = parsed.theme
-        if (parsed.editMode !== undefined) editMode.value = parsed.editMode
+        // IR 模式下编辑模式不再可选，旧值一律归一为 'ir'
+        editMode.value = 'ir'
+        // 快捷键配置：合并保存的覆盖项（保留默认新增项）
+        if (parsed.shortcuts !== undefined) {
+          shortcuts.value = { ...DEFAULT_SETTINGS.shortcuts, ...parsed.shortcuts }
+        }
         if (parsed.windowBounds !== undefined) {
           windowBounds.value = { ...DEFAULT_SETTINGS.windowBounds, ...parsed.windowBounds }
         }
@@ -123,6 +143,7 @@ export const useSettingsStore = defineStore('settings', () => {
       const data = {
         theme: theme.value,
         editMode: editMode.value,
+        shortcuts: shortcuts.value,
         windowBounds: windowBounds.value,
         recentFolders: recentFolders.value,
         recentFiles: recentFiles.value,
@@ -167,7 +188,7 @@ export const useSettingsStore = defineStore('settings', () => {
    * @param {string} mode - 编辑模式 ('edit' | 'preview' | 'split')
    */
   function updateEditMode(mode) {
-    if (['edit', 'preview', 'split'].includes(mode)) {
+    if (['ir'].includes(mode)) {
       editMode.value = mode
       saveSettings()
     }
@@ -427,6 +448,7 @@ export const useSettingsStore = defineStore('settings', () => {
     // State
     theme,
     editMode,
+    shortcuts,
     windowBounds,
     recentFolders,
     recentFiles,
@@ -447,6 +469,18 @@ export const useSettingsStore = defineStore('settings', () => {
     updateTheme,
     toggleTheme,
     updateEditMode,
+    /** 更新单个快捷键绑定（action 如 heading1 / codeBlock） */
+    updateShortcut(action, combo) {
+      if (shortcuts.value && action in shortcuts.value && combo) {
+        shortcuts.value[action] = combo.toLowerCase()
+        saveSettings()
+      }
+    },
+    /** 重置全部快捷键为默认 */
+    resetShortcuts() {
+      shortcuts.value = JSON.parse(JSON.stringify(DEFAULT_SETTINGS.shortcuts))
+      saveSettings()
+    },
     updateWindowBounds,
     addRecentFolder,
     addRecentFile,
