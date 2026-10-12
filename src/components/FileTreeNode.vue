@@ -239,6 +239,9 @@ function onNodeClick() {
 
 /** 右键菜单 */
 function onContextMenu(event) {
+  // 阻止冒泡：外层父节点的 .file-tree-node 容器也监听 contextmenu，
+  // 若不阻止，子节点右键会被父节点覆盖，导致菜单目标变成一级目录
+  event.stopPropagation()
   emit('context-menu', {
     event,
     node: {

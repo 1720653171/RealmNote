@@ -56,6 +56,20 @@
     <v-spacer />
 
     <!-- 快捷操作按钮 -->
+    <v-tooltip text="刷新（从磁盘重新加载当前文件）" location="bottom">
+      <template v-slot:activator="{ props }">
+        <v-btn
+          icon
+          variant="text"
+          v-bind="props"
+          :disabled="!fileStore.activeFile"
+          @click="onReload"
+        >
+          <v-icon>mdi-refresh</v-icon>
+        </v-btn>
+      </template>
+    </v-tooltip>
+
     <v-tooltip text="保存 (Ctrl+S)" location="bottom">
       <template v-slot:activator="{ props }">
         <v-btn
@@ -66,6 +80,15 @@
           @click="onSave"
         >
           <v-icon>mdi-content-save</v-icon>
+        </v-btn>
+      </template>
+    </v-tooltip>
+
+    <!-- 快捷键设置按钮 -->
+    <v-tooltip text="快捷键设置" location="bottom">
+      <template v-slot:activator="{ props }">
+        <v-btn icon variant="text" v-bind="props" @click="shortcutsDialogVisible = true">
+          <v-icon>mdi-keyboard</v-icon>
         </v-btn>
       </template>
     </v-tooltip>
@@ -90,12 +113,16 @@
 
     <!-- 设置对话框 -->
     <SettingsDialog v-model="settingsDialogVisible" />
+
+    <!-- 快捷键设置对话框 -->
+    <ShortcutDialog v-model="shortcutsDialogVisible" />
   </v-app-bar>
 </template>
 
 <script setup>
 import { inject, ref, computed } from 'vue'
 import SettingsDialog from './SettingsDialog.vue'
+import ShortcutDialog from './ShortcutDialog.vue'
 
 // ============ Inject ============
 
@@ -109,6 +136,9 @@ const settingsStore = inject('settingsStore')
 
 /** 设置对话框是否可见 */
 const settingsDialogVisible = ref(false)
+
+/** 快捷键设置对话框是否可见 */
+const shortcutsDialogVisible = ref(false)
 
 // ============ Computed ============
 
@@ -173,6 +203,18 @@ async function onSave() {
 function onSaveAs() {
   // TODO: 实现另存为对话框
   console.log('另存为')
+}
+
+/**
+ * 从磁盘重新加载当前文件
+ */
+async function onReload() {
+  if (fileStore && fileStore.activeFile) {
+    const result = await fileStore.reloadFile(fileStore.activeFilePath)
+    if (!result.success) {
+      console.error('刷新文件失败:', result.error)
+    }
+  }
 }
 
 /**

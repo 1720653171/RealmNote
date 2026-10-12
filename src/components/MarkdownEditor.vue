@@ -17,43 +17,104 @@
           <span v-if="headings.length > 0" class="toc-count">{{ headings.length }}</span>
         </v-btn>
       </div>
-      <div class="toolbar-right">
-        <v-btn
-          size="small"
-          variant="text"
-          :color="theme === 'dark' ? 'white' : 'default'"
-          @click="shortcutDialogVisible = true"
-          title="快捷键设置"
-        >
-          <v-icon size="18">mdi-keyboard</v-icon>
-          <span class="btn-label">快捷键</span>
-        </v-btn>
-        <v-btn
-          size="small"
-          variant="text"
-          :color="theme === 'dark' ? 'white' : 'default'"
-          @click="handleReload"
-          title="从磁盘重新加载"
-        >
-          <v-icon size="18">mdi-refresh</v-icon>
-          <span class="btn-label">刷新</span>
-        </v-btn>
-        <v-btn
-          size="small"
-          variant="text"
-          :color="theme === 'dark' ? 'white' : 'default'"
-          @click="handleSave"
-          :disabled="!modified"
-          title="保存 (Ctrl+S)"
-        >
-          <v-icon size="18">mdi-content-save</v-icon>
-          <span class="btn-label">保存</span>
-        </v-btn>
-      </div>
     </div>
 
     <!-- 编辑器内容区域 -->
-    <div class="editor-content">
+    <div ref="editorContentRef" class="editor-content">
+      <!-- 表格编辑浮动工具条（光标位于表格内时，悬浮于表格上方） -->
+      <div
+        v-if="tableToolbar.visible"
+        class="table-toolbar"
+        :style="{ left: tableToolbar.x + 'px', top: tableToolbar.y + 'px' }"
+      >
+        <v-tooltip text="在上方插入行" location="bottom">
+          <template #activator="{ props: tipProps }">
+            <v-btn
+              icon
+              size="x-small"
+              variant="text"
+              v-bind="tipProps"
+              :disabled="tableToolbar.inHead"
+              @mousedown.prevent
+              @click="tableInsertRow(true)"
+            >
+              <v-icon size="16">mdi-table-row-plus-before</v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip text="在下方插入行" location="bottom">
+          <template #activator="{ props: tipProps }">
+            <v-btn
+              icon
+              size="x-small"
+              variant="text"
+              v-bind="tipProps"
+              @mousedown.prevent
+              @click="tableInsertRow(false)"
+            >
+              <v-icon size="16">mdi-table-row-plus-after</v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip text="在左侧插入列" location="bottom">
+          <template #activator="{ props: tipProps }">
+            <v-btn
+              icon
+              size="x-small"
+              variant="text"
+              v-bind="tipProps"
+              @mousedown.prevent
+              @click="tableInsertCol(true)"
+            >
+              <v-icon size="16">mdi-table-column-plus-before</v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip text="在右侧插入列" location="bottom">
+          <template #activator="{ props: tipProps }">
+            <v-btn
+              icon
+              size="x-small"
+              variant="text"
+              v-bind="tipProps"
+              @mousedown.prevent
+              @click="tableInsertCol(false)"
+            >
+              <v-icon size="16">mdi-table-column-plus-after</v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip text="删除当前行" location="bottom">
+          <template #activator="{ props: tipProps }">
+            <v-btn
+              icon
+              size="x-small"
+              variant="text"
+              v-bind="tipProps"
+              :disabled="tableToolbar.inHead"
+              @mousedown.prevent
+              @click="tableDeleteRow"
+            >
+              <v-icon size="16">mdi-table-row-remove</v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip text="删除当前列" location="bottom">
+          <template #activator="{ props: tipProps }">
+            <v-btn
+              icon
+              size="x-small"
+              variant="text"
+              v-bind="tipProps"
+              :disabled="tableToolbar.colCount <= 1"
+              @mousedown.prevent
+              @click="tableDeleteCol"
+            >
+              <v-icon size="16">mdi-table-column-remove</v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+      </div>
       <!-- TOC 目录面板 -->
       <TocPanel
         :key="fileKey"
@@ -74,8 +135,8 @@
       ></div>
     </div>
 
-    <!-- 快捷键设置对话框 -->
-    <ShortcutDialog v-model="shortcutDialogVisible" />
+    <!-- 插入表格行列数对话框 -->
+    <TableSizeDialog v-model="tableDialogVisible" @confirm="handleInsertTable" />
   </div>
 </template>
 
@@ -84,7 +145,7 @@ import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import Vditor from 'vditor'
 import 'vditor/dist/index.css'
 import TocPanel from './TocPanel.vue'
-import ShortcutDialog from './ShortcutDialog.vue'
+import TableSizeDialog from './TableSizeDialog.vue'
 import { extractHeadings } from '@/utils/toc'
 import { useSettingsStore } from '@/stores/settingsStore'
 
@@ -154,8 +215,48 @@ let vditorInstance = null
 /** 输入防抖定时器 */
 let inputTimer = null
 
-/** 快捷键设置对话框可见性 */
-const shortcutDialogVisible = ref(false)
+/** 插入表格对话框可见性 */
+const tableDialogVisible = ref(false)
+
+/** 编辑器内容区容器（表格工具条定位基准） */
+const editorContentRef = ref(null)
+
+/** 表格工具条状态与位置 */
+const tableToolbar = ref({ visible: false, x: 0, y: 0, inHead: false, colCount: 3 })
+
+/** selectionchange 防抖帧 ID 与监听器引用 */
+let tableToolbarRaf = 0
+let selectionChangeListener = null
+let editorScrollListener = null
+
+/** 代码块语言下拉精选列表：常见编程语言 / 运维脚本 / 图表语言（渲染为图形） */
+const CODE_BLOCK_LANGS = [
+  // 图表类（Vditor 渲染为可视化图形）
+  'mermaid', 'flowchart', 'plantuml', 'echarts', 'mindmap', 'graphviz', 'wavedrom', 'abc',
+  // 编程语言
+  'java', 'python', 'c', 'cpp', 'csharp', 'go', 'rust', 'php', 'ruby',
+  'kotlin', 'swift', 'scala', 'groovy', 'dart', 'lua', 'perl',
+  // 前端 / 标记 / 数据
+  'javascript', 'typescript', 'html', 'css', 'scss', 'less', 'json', 'xml', 'yaml', 'markdown', 'sql',
+  // 运维 / Shell / 配置
+  'bash', 'shell', 'powershell', 'bat', 'dos', 'dockerfile', 'nginx', 'ini', 'toml', 'makefile', 'diff', 'plaintext'
+]
+
+/** 代码块折叠阈值：超过该行数才显示折叠按钮 */
+const CODE_FOLD_THRESHOLD = 20
+
+/** 折叠后可见高度（约 3 行） */
+const CODE_FOLD_COLLAPSED_HEIGHT = '5.5em'
+
+/** 代码块折叠按钮同步观察器 */
+let codeFoldObserver = null
+let codeFoldRaf = 0
+
+/** 语言提示面板搜索框观察器 */
+let hintSearchObserver = null
+
+/** 语言按钮点击提示处理函数引用（卸载时移除） */
+let languageClickHandler = null
 
 /** 快捷键监听器引用（卸载时移除） */
 let shortcutHandler = null
@@ -183,14 +284,20 @@ function initVditor() {
     typewriterMode: false,
     // 关键：IR 内容区宽度不限制（默认 800px 居中，两侧留白随窗口增大，
     // 全屏时每侧空白可达 400px+）。调大后仅保留 35px 最小边距
-    preview: { maxWidth: 100000 },
+    preview: { maxWidth: 100000, hljs: { langs: CODE_BLOCK_LANGS } },
     toolbarConfig: { pin: true },
     // 精简工具栏：只保留高频操作，不放源码/分屏模式切换按钮，保持纯 IR
     toolbar: [
       'headings', 'bold', 'italic', 'strike', '|',
       'list', 'ordered-list', 'check', 'outdent', 'indent', '|',
       'quote', 'line', 'code', 'inline-code', 'insert-before', 'insert-after', '|',
-      'link', 'table', '|', 'undo', 'redo', '|', 'fullscreen', 'export'
+      'link', {
+        // 自定义表格按钮：弹出对话框输入行列数后生成表格（原生按钮固定 3×3）
+        name: 'rn-table',
+        icon: '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M3 3h18v18H3V3zm2 2v4h6V5H5zm8 0v4h6V5h-6zM5 11v4h6v-4H5zm8 0v4h6v-4h-6zM5 17v4h6v-4H5zm8 0v4h6v-4h-6z"/></svg>',
+        tip: '插入表格（自定义行列数）',
+        click: () => { tableDialogVisible.value = true }
+      }, '|', 'undo', 'redo', '|', 'fullscreen', 'export'
     ],
     input: (value) => {
       // IR 模式下每次编辑触发；防抖 150ms 同步给父组件，避免逐键触发 fileStore 更新
@@ -207,6 +314,11 @@ function initVditor() {
       applyTheme(props.theme)
       refreshHeadings(props.content)
       bindEditorShortcuts()
+      bindCodeFoldObserver()
+      patchHintGenHTML()
+      bindHintSearch()
+      bindLanguageClickHint()
+      bindTableToolbar()
     }
   })
 }
@@ -270,10 +382,257 @@ function handleSave() {
   emit('save')
 }
 
-function handleReload() {
-  emit('reload')
+// ============ 表格增强 ============
+
+/**
+ * 按指定行列数在光标处插入表格
+ * 采用 DOM 直插（同标题快捷键方案）：构造 table 元素替换光标所在块，
+ * 触发 input 后由 Lute 反序列化为 markdown；不走 insertValue 文本插入，
+ * 避免 Vditor 对表格末尾的自动补行导致行数不可控
+ * @param {number} rows - 总行数（含表头行）
+ * @param {number} cols - 列数
+ */
+function handleInsertTable(rows, cols) {
+  if (!vditorInstance) return
+  const irEl = vditorInstance.vditor?.ir?.element
+  const sel = window.getSelection()
+  if (!irEl || !sel.rangeCount) return
+
+  // 找到光标所在块级元素
+  let node = sel.getRangeAt(0).startContainer
+  if (node.nodeType !== 1) node = node.parentElement
+  let block = null
+  while (node && node !== irEl) {
+    if (node.nodeType === 1 && node.getAttribute('data-block') === '0') {
+      block = node
+      break
+    }
+    node = node.parentNode
+  }
+  if (!block) return
+
+  const table = document.createElement('table')
+  table.setAttribute('data-block', '0')
+  const thead = document.createElement('thead')
+  const headTr = document.createElement('tr')
+  for (let c = 0; c < cols; c++) {
+    const th = document.createElement('th')
+    th.textContent = 'col' + (c + 1)
+    headTr.appendChild(th)
+  }
+  thead.appendChild(headTr)
+  table.appendChild(thead)
+
+  if (rows > 1) {
+    const tbody = document.createElement('tbody')
+    for (let r = 1; r < rows; r++) {
+      const tr = document.createElement('tr')
+      for (let c = 0; c < cols; c++) {
+        const td = document.createElement('td')
+        td.textContent = ' '
+        tr.appendChild(td)
+      }
+      tbody.appendChild(tr)
+    }
+    table.appendChild(tbody)
+  }
+
+  block.replaceWith(table)
+  triggerTableInput()
+  focusTableCell(0, 0)
 }
 
+/**
+ * 表格 DOM 操作后恢复光标到指定单元格。
+ * 注意：不能用 <wbr> 方案——Lute 序列化表格时会丢失含 wbr 的单元格文本；
+ * 改为 input 重渲染完成后按行列索引手动定位（rAF 等待块重建）
+ * @param {number} rowIndex - 目标行号
+ * @param {number} colIndex - 目标列号
+ */
+function focusTableCell(rowIndex, colIndex) {
+  requestAnimationFrame(() => {
+    const irEl = vditorInstance?.vditor?.ir?.element
+    const table = irEl && irEl.querySelector('table')
+    const cell = table && table.rows[rowIndex] && table.rows[rowIndex].children[colIndex]
+    if (!cell) return
+    const range = document.createRange()
+    range.selectNodeContents(cell)
+    range.collapse(false)
+    const sel = window.getSelection()
+    sel.removeAllRanges()
+    sel.addRange(range)
+  })
+}
+
+/**
+ * 获取光标所在表格单元格上下文
+ * @returns {{table, tr, cell, colIndex, rowIndex, colCount, inHead} | null}
+ */
+function getCellContext() {
+  const sel = window.getSelection()
+  if (!sel.rangeCount) return null
+  let node = sel.getRangeAt(0).startContainer
+  if (node.nodeType !== 1) node = node.parentElement
+  if (!node || !node.closest) return null
+  const cell = node.closest('td, th')
+  const table = cell ? cell.closest('table') : null
+  const irEl = vditorInstance?.vditor?.ir?.element
+  if (!cell || !table || !irEl || !irEl.contains(table)) return null
+  const tr = cell.parentElement
+  const colIndex = Array.from(tr.children).indexOf(cell)
+  const rowIndex = Array.from(table.rows).indexOf(tr)
+  const colCount = table.rows[0] ? table.rows[0].children.length : 0
+  return {
+    table,
+    tr,
+    cell,
+    colIndex,
+    rowIndex,
+    colCount,
+    inHead: tr.parentElement.tagName === 'THEAD'
+  }
+}
+
+/** 光标变化后同步表格工具条显隐与位置（rAF 防抖） */
+function scheduleUpdateTableToolbar() {
+  if (tableToolbarRaf) cancelAnimationFrame(tableToolbarRaf)
+  tableToolbarRaf = requestAnimationFrame(() => {
+    tableToolbarRaf = 0
+    updateTableToolbar()
+  })
+}
+
+function updateTableToolbar() {
+  const ctx = getCellContext()
+  const container = editorContentRef.value
+  if (!ctx || !container) {
+    if (tableToolbar.value.visible) tableToolbar.value = { ...tableToolbar.value, visible: false }
+    return
+  }
+  const tableRect = ctx.table.getBoundingClientRect()
+  const baseRect = container.getBoundingClientRect()
+  const TOOLBAR_WIDTH = 216
+  const TOOLBAR_HEIGHT = 28
+  // 定位在表格正上方，与表格左边缘对齐
+  const x = Math.min(
+    Math.max(4, tableRect.left - baseRect.left),
+    baseRect.width - TOOLBAR_WIDTH - 8
+  )
+  const y = Math.max(4, tableRect.top - baseRect.top - TOOLBAR_HEIGHT - 2)
+  tableToolbar.value = {
+    visible: true,
+    x,
+    y,
+    inHead: ctx.inHead,
+    colCount: ctx.colCount
+  }
+}
+
+/** 触发 Vditor IR 重新解析表格块（wbr 已在目标单元格内，用于恢复光标） */
+function triggerTableInput() {
+  const irEl = vditorInstance?.vditor?.ir?.element
+  if (irEl) irEl.dispatchEvent(new InputEvent('input', { bubbles: true }))
+}
+
+/**
+ * 在光标所在行上方/下方插入一行
+ * @param {boolean} before - true 上方插入；false 下方插入
+ * 表头行不支持上方插入（按钮禁用）；表头行的下方插入进表体首行
+ */
+function tableInsertRow(before) {
+  const ctx = getCellContext()
+  if (!ctx) return
+  if (before && ctx.inHead) return
+  const colCount = ctx.colCount
+  const newTr = document.createElement('tr')
+  for (let i = 0; i < colCount; i++) {
+    const td = document.createElement('td')
+    td.textContent = ' '
+    newTr.appendChild(td)
+  }
+  if (ctx.inHead) {
+    // 表头行的下方 → 表体首行
+    let tbody = ctx.table.tBodies[0]
+    if (!tbody) {
+      tbody = document.createElement('tbody')
+      ctx.table.appendChild(tbody)
+    }
+    tbody.insertBefore(newTr, tbody.firstElementChild)
+  } else if (before) {
+    ctx.tr.before(newTr)
+  } else {
+    ctx.tr.after(newTr)
+  }
+  triggerTableInput()
+  focusTableCell(ctx.inHead ? 1 : before ? ctx.rowIndex : ctx.rowIndex + 1, 0)
+}
+
+/** 删除光标所在行（表头行不可删，由按钮禁用态保证） */
+function tableDeleteRow() {
+  const ctx = getCellContext()
+  if (!ctx || ctx.inHead) return
+  ctx.tr.remove()
+  triggerTableInput()
+  const total = ctx.table.rows.length - 1
+  focusTableCell(Math.min(ctx.rowIndex, total - 1), Math.min(ctx.colIndex, ctx.colCount - 1))
+}
+
+/**
+ * 在光标所在列左侧/右侧插入一列（表头行插 th）
+ * @param {boolean} before - true 左侧插入；false 右侧插入
+ */
+function tableInsertCol(before) {
+  const ctx = getCellContext()
+  if (!ctx) return
+  Array.from(ctx.table.rows).forEach((tr) => {
+    const refCell = tr.children[Math.min(ctx.colIndex, tr.children.length - 1)]
+    const newCell = document.createElement(tr.parentElement.tagName === 'THEAD' ? 'th' : 'td')
+    newCell.textContent = ' '
+    if (before) {
+      refCell.before(newCell)
+    } else {
+      refCell.after(newCell)
+    }
+  })
+  triggerTableInput()
+  focusTableCell(ctx.rowIndex, before ? ctx.colIndex : ctx.colIndex + 1)
+}
+
+/** 删除光标所在列（仅剩 1 列时不可删，由按钮禁用态保证） */
+function tableDeleteCol() {
+  const ctx = getCellContext()
+  if (!ctx || ctx.colCount <= 1) return
+  const targetCol = ctx.colIndex > 0 ? ctx.colIndex - 1 : 1
+  Array.from(ctx.table.rows).forEach((tr) => {
+    if (tr.children[ctx.colIndex]) tr.children[ctx.colIndex].remove()
+  })
+  triggerTableInput()
+  focusTableCell(ctx.rowIndex, Math.min(targetCol, ctx.colCount - 2))
+}
+
+/** 监听光标变化与编辑器滚动，驱动表格工具条 */
+function bindTableToolbar() {
+  if (selectionChangeListener) return
+  selectionChangeListener = scheduleUpdateTableToolbar
+  document.addEventListener('selectionchange', selectionChangeListener)
+  editorScrollListener = scheduleUpdateTableToolbar
+  const container = editorContentRef.value
+  if (container) container.addEventListener('scroll', editorScrollListener, true)
+  scheduleUpdateTableToolbar()
+}
+
+function unbindTableToolbar() {
+  if (selectionChangeListener) {
+    document.removeEventListener('selectionchange', selectionChangeListener)
+    selectionChangeListener = null
+  }
+  if (editorScrollListener) {
+    editorContentRef.value?.removeEventListener('scroll', editorScrollListener, true)
+    editorScrollListener = null
+  }
+}
+
+// ============ 编辑器快捷键 ============
 // ============ 编辑器快捷键 ============
 
 /**
@@ -423,6 +782,247 @@ function unbindEditorShortcuts() {
   shortcutHandler = null
 }
 
+// ============ 代码块折叠（方案 A：默认展开，超长显示折叠按钮，纯视图状态不持久化） ============
+
+/** 防抖调度折叠按钮同步（DOM 波动密集时合并到下一帧执行一次） */
+function scheduleSyncCodeFold() {
+  if (codeFoldRaf) cancelAnimationFrame(codeFoldRaf)
+  codeFoldRaf = requestAnimationFrame(() => {
+    codeFoldRaf = 0
+    syncCodeFoldChips()
+  })
+}
+
+/**
+ * 同步所有代码块的折叠按钮状态
+ * 按钮注入在 pre.vditor-ir__preview（data-render=1）内部：该子树由 Vditor
+ * 渲染管线重建、不参与 markdown 序列化（与自带复制按钮同机制），因此
+ * 注入的按钮不会污染文档内容；重渲染后被清除 → 由观察器再次补挂
+ */
+function syncCodeFoldChips() {
+  if (!vditorInstance) return
+  const irEl = vditorInstance.vditor?.ir?.element
+  if (!irEl) return
+  irEl.querySelectorAll('[data-type="code-block"]').forEach((node) => {
+    const preview = node.querySelector('pre.vditor-ir__preview')
+    if (!preview) return
+    const code = preview.querySelector('code')
+    const lineCount = code ? code.textContent.split('\n').length : 0
+
+    if (lineCount <= CODE_FOLD_THRESHOLD) {
+      // 不超长：移除按钮并确保展开
+      const chip = preview.querySelector('.rn-code-fold')
+      if (chip) chip.remove()
+      node.classList.remove('rn-code-collapsed')
+      return
+    }
+
+    let chip = preview.querySelector('.rn-code-fold')
+    if (!chip) {
+      chip = document.createElement('span')
+      chip.className = 'rn-code-fold'
+      // 阻止点击传播到 IR 编辑区，避免移动光标/触发解析
+      chip.addEventListener('mousedown', (e) => e.stopPropagation())
+      chip.addEventListener('click', (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        toggleCodeFold(node)
+      })
+      preview.appendChild(chip)
+    }
+    const collapsed = node.classList.contains('rn-code-collapsed')
+    if (code) {
+      // 直接改内联 max-height：折叠时覆盖 Vditor 自带的 760px 限高
+      code.style.maxHeight = collapsed ? CODE_FOLD_COLLAPSED_HEIGHT : ''
+    }
+    chip.textContent = collapsed ? '展开全部（共 ' + lineCount + ' 行）' : '折叠'
+    chip.title = collapsed ? '展开代码块' : '折叠代码块'
+  })
+}
+
+/** 切换指定代码块的折叠状态 */
+function toggleCodeFold(node) {
+  node.classList.toggle('rn-code-collapsed')
+  syncCodeFoldChips()
+}
+
+/** 监听 IR 区 DOM 变化，自动补挂/更新折叠按钮 */
+function bindCodeFoldObserver() {
+  const irEl = vditorInstance?.vditor?.ir?.element
+  if (!irEl || codeFoldObserver) return
+  codeFoldObserver = new MutationObserver(scheduleSyncCodeFold)
+  codeFoldObserver.observe(irEl, { childList: true, subtree: true })
+  scheduleSyncCodeFold()
+}
+
+// ============ 语言提示面板搜索框（Vditor 原生 hint 无搜索能力） ============
+
+/**
+ * 监听 hint 面板：显示时在顶部注入搜索输入框，输入即过滤语言列表；
+ * 隐藏时移除，确保下次打开是干净状态。
+ * 注意页面存在多个 .vditor-hint 元素，必须使用 vditor.hint.element 这个活跃实例。
+ */
+function bindHintSearch() {
+  const hintEl = vditorInstance?.vditor?.hint?.element
+  if (!hintEl || hintSearchObserver) return
+  hintSearchObserver = new MutationObserver(() => syncHintSearch(hintEl))
+  hintSearchObserver.observe(hintEl, { attributes: true, attributeFilter: ['style'], childList: true })
+}
+
+/**
+ * 解除 Vditor 语言提示列表最多 8 条的限制：
+ * 包装 hint.genHTML，超过 8 条时先用原版渲染前 8 条（复用其定位/高亮/绑定），
+ * 再自行追加剩余条目并补齐点击与溢出处理
+ */
+function patchHintGenHTML() {
+  const hint = vditorInstance?.vditor?.hint
+  if (!hint || hint.__rnUncapped) return
+  const orig = hint.genHTML.bind(hint)
+  hint.__rnUncapped = true
+  hint.genHTML = function (data, key, vditor) {
+    if (!data || data.length <= 8) {
+      orig(data, key, vditor)
+      return
+    }
+    orig(data.slice(0, 8), key, vditor)
+    if (hint.element.style.display === 'none') return
+    const buildBtn = (hintData) => {
+      let html = hintData.html
+      if (key) {
+        const lastIndex = html.lastIndexOf('>') + 1
+        let replaceHtml = html.substr(lastIndex)
+        const idx = replaceHtml.toLowerCase().indexOf(key.toLowerCase())
+        if (idx > -1) {
+          replaceHtml = replaceHtml.substring(0, idx) + '<b>' +
+            replaceHtml.substring(idx, idx + key.length) + '</b>' +
+            replaceHtml.substring(idx + key.length)
+          html = html.substr(0, lastIndex) + replaceHtml
+        }
+      }
+      const btn = document.createElement('button')
+      btn.type = 'button'
+      btn.setAttribute('data-value', encodeURIComponent(hintData.value) + ' ')
+      btn.innerHTML = ' ' + html
+      return btn
+    }
+    const frag = document.createDocumentFragment()
+    data.slice(8).forEach((d) => frag.appendChild(buildBtn(d)))
+    hint.element.appendChild(frag)
+    hint.element.querySelectorAll('button').forEach((btn) => {
+      if (!btn.__rnBound) {
+        btn.__rnBound = true
+        btn.addEventListener('click', (event) => {
+          hint.fillEmoji(btn, vditor)
+          event.preventDefault()
+        })
+      }
+    })
+    const rect = hint.element.getBoundingClientRect()
+    if (rect.bottom > window.innerHeight) {
+      const top = parseFloat(hint.element.style.top) || 0
+      hint.element.style.top = (top - (rect.bottom - window.innerHeight) - 8) + 'px'
+    }
+  }
+}
+
+/**
+ * 点击语言按钮（如 bash/java）时弹出语言选择面板。
+ * Vditor 原生仅在输入（keyup）时触发提示，点击无响应；此处补齐点击行为：
+ * 光标移入语言标记并按当前前缀生成候选列表（复用已解除条数限制的 genHTML）
+ */
+function bindLanguageClickHint() {
+  const irEl = vditorInstance?.vditor?.ir?.element
+  if (!irEl || languageClickHandler) return
+  languageClickHandler = (e) => {
+    const info = e.target.closest('[data-type="code-block-info"]')
+    const vditor = vditorInstance?.vditor
+    if (!info || !vditor) return
+    // 光标移入语言标记末尾，保持与输入时一致的编辑状态
+    const range = document.createRange()
+    range.selectNodeContents(info)
+    range.collapse(false)
+    const sel = window.getSelection()
+    sel.removeAllRanges()
+    sel.addRange(range)
+    info.focus()
+    // 生成候选列表（与 processHint 同样的前缀匹配逻辑）
+    const langs = (vditor.options.preview.hljs && vditor.options.preview.hljs.langs) || []
+    const key = (info.textContent || '').replace(/\u200b/g, '').toLowerCase()
+    const data = langs
+      .filter((l) => l.toLowerCase().includes(key))
+      .map((l) => ({ html: l, value: l }))
+    vditor.hint.genHTML(data, key, vditor)
+  }
+  irEl.addEventListener('click', languageClickHandler)
+}
+/** 同步搜索框：面板可见且是语言列表时注入/复用，隐藏时移除 */
+function syncHintSearch(hintEl) {
+  const visible = hintEl.style.display === 'block'
+  const isLangList = !!hintEl.querySelector('button[data-value]')
+  let input = hintEl.querySelector('.rn-hint-search')
+
+  if (!visible || !isLangList) {
+    if (input) input.remove()
+    return
+  }
+  if (!input) {
+    input = document.createElement('input')
+    input.className = 'rn-hint-search'
+    input.placeholder = '搜索语言...'
+    input.addEventListener('input', () => filterHintList(hintEl, input))
+    input.addEventListener('mousedown', (e) => e.stopPropagation())
+    input.addEventListener('click', (e) => e.stopPropagation())
+    input.addEventListener('keydown', (e) => handleHintSearchKeydown(e, hintEl, input))
+    hintEl.prepend(input)
+  }
+  // 每次面板重新打开时重置筛选
+  if (input.value) {
+    input.value = ''
+    filterHintList(hintEl, input)
+  }
+}
+
+/** 按关键字过滤语言列表，并把“当前项”重置到第一个可见项 */
+function filterHintList(hintEl, input) {
+  const keyword = input.value.trim().toLowerCase()
+  const items = [...hintEl.querySelectorAll('button[data-value]')]
+  let firstVisible = null
+  items.forEach((btn) => {
+    const hit = !keyword || btn.textContent.toLowerCase().includes(keyword)
+    btn.style.display = hit ? '' : 'none'
+    btn.classList.remove('vditor-hint--current')
+    if (hit && !firstVisible) firstVisible = btn
+  })
+  if (firstVisible) firstVisible.classList.add('vditor-hint--current')
+}
+
+/** 搜索框内 Enter/↑/↓/Escape 的键盘导航 */
+function handleHintSearchKeydown(e, hintEl, input) {
+  const visible = () => [...hintEl.querySelectorAll('button[data-value]')].filter(b => b.style.display !== 'none')
+  if (e.key === 'Enter') {
+    e.preventDefault()
+    const current = visible().find(b => b.classList.contains('vditor-hint--current')) || visible()[0]
+    if (current) current.click()
+  } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault()
+    const items = visible()
+    if (!items.length) return
+    const idx = items.findIndex(b => b.classList.contains('vditor-hint--current'))
+    const next = e.key === 'ArrowDown'
+      ? items[Math.min(idx + 1, items.length - 1)]
+      : items[Math.max(idx - 1, 0)]
+    items.forEach(b => b.classList.remove('vditor-hint--current'))
+    next.classList.add('vditor-hint--current')
+    next.scrollIntoView({ block: 'nearest' })
+  } else if (e.key === 'Escape') {
+    e.preventDefault()
+    hintEl.style.display = 'none'
+    input.value = ''
+    filterHintList(hintEl, input)
+    vditorInstance?.vditor?.ir?.element?.focus()
+  }
+}
+
 // ============ 侦听器 ============
 
 /** 外部内容变化（切换文件/重载）→ 注入编辑器；内部编辑引起的变化跳过 */
@@ -446,6 +1046,21 @@ onMounted(() => {
 onBeforeUnmount(() => {
   if (inputTimer) clearTimeout(inputTimer)
   unbindEditorShortcuts()
+  if (codeFoldObserver) {
+    codeFoldObserver.disconnect()
+    codeFoldObserver = null
+  }
+  if (hintSearchObserver) {
+    hintSearchObserver.disconnect()
+    hintSearchObserver = null
+  }
+  if (languageClickHandler && vditorInstance) {
+    const irEl = vditorInstance.vditor?.ir?.element
+    if (irEl) irEl.removeEventListener('click', languageClickHandler)
+    languageClickHandler = null
+  }
+  unbindTableToolbar()
+  if (codeFoldRaf) cancelAnimationFrame(codeFoldRaf)
   try {
     vditorInstance?.destroy?.()
   } catch (e) {
@@ -547,6 +1162,27 @@ defineExpose({
   height: 100%;
   border: none;
 }
+
+/* 表格编辑浮动工具条（绝对定位于 editor-content，坐标由 JS 计算） */
+.table-toolbar {
+  position: absolute;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 4px;
+  background-color: #ffffff;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  height: 28px;
+}
+
+/* 暗色主题适配 */
+.markdown-editor.dark .table-toolbar {
+  background-color: #2d333b;
+  border-color: #444c56;
+}
 </style>
 
 <style>
@@ -595,5 +1231,118 @@ defineExpose({
   right: auto !important;
   margin-left: 0 !important;
   transform: none !important;
+}
+
+/* ===== 代码块增强：灰底色差 + 语言按钮 + 折叠按钮 ===== */
+
+/* 编辑态（--expand）只显示源码编辑区，隐藏下方渲染预览区，避免出现两块区域 */
+.vditor-container .vditor-ir .vditor-ir__node--expand > .vditor-ir__preview {
+  display: none;
+}
+
+/* 渲染视图：与正文有明显色差的灰色区域 */
+.vditor-container .vditor-ir .vditor-ir__node[data-type="code-block"] .vditor-ir__preview {
+  position: relative;
+  background-color: #f6f8fa;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin: 4px 0;
+}
+
+/* 语言按钮（bash）：胶囊按钮样式，位于代码块正上方 */
+.vditor-container .vditor-ir .vditor-ir__marker--info[data-type="code-block-info"] {
+  display: inline-block;
+  background-color: #eaeef2;
+  border: 1px solid #d0d7de;
+  border-radius: 4px;
+  padding: 0 10px;
+  margin: 2px 0 6px;
+  line-height: 20px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+/* 折叠按钮：位于渲染区右上角（复制按钮左侧） */
+.vditor-container .vditor-ir .rn-code-fold {
+  position: absolute;
+  top: 6px;
+  right: 40px;
+  z-index: 2;
+  font-size: 12px;
+  line-height: 20px;
+  padding: 0 8px;
+  background-color: #ffffff;
+  border: 1px solid #d0d7de;
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+  opacity: 0.85;
+}
+
+.vditor-container .vditor-ir .rn-code-fold:hover {
+  opacity: 1;
+  background-color: #f0f4f8;
+}
+
+/* 折叠态：代码底部渐隐，暗示内容被收纳 */
+.vditor-container .vditor-ir .rn-code-collapsed .vditor-ir__preview code {
+  -webkit-mask-image: linear-gradient(180deg, #000 55%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 55%, transparent 100%);
+}
+
+/* 暗色主题适配 */
+.vditor--dark .vditor-ir .vditor-ir__node[data-type="code-block"] .vditor-ir__preview {
+  background-color: #252c33;
+  border-color: #3a434c;
+}
+
+/* 语言提示面板：限制高度滚动查看完整列表 */
+.vditor-hint {
+  max-height: 46vh;
+  overflow-y: auto;
+}
+
+/* 语言提示面板搜索框（吸顶） */
+.vditor-hint .rn-hint-search {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 0 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  border: 1px solid #d0d7de;
+  border-radius: 4px;
+  outline: none;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background-color: #ffffff;
+}
+
+.vditor-hint .rn-hint-search:focus {
+  border-color: #0969da;
+}
+
+.vditor--dark .vditor-hint .rn-hint-search {
+  background-color: #22272e;
+  border-color: #444c56;
+  color: #adbac7;
+}
+
+.vditor--dark .vditor-ir .vditor-ir__marker--info[data-type="code-block-info"] {
+  background-color: #3a434c;
+  border-color: #444c56;
+  color: #adbac7;
+}
+
+.vditor--dark .vditor-ir .rn-code-fold {
+  background-color: #2d333b;
+  border-color: #444c56;
+  color: #adbac7;
+}
+
+.vditor--dark .vditor-ir .rn-code-fold:hover {
+  background-color: #37424c;
 }
 </style>
